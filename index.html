@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QA Test Data — RO</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#111827; --ink:#ecf3ff; --muted:#a4b2c9; --line:rgba(255,255,255,.08);
+      --accent:#60a5fa; --accent-2:#22c55e; --warn:#f59e0b; --radius:16px; --shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+    html,body{height:100%}
+    body{margin:0; background:radial-gradient(1200px 800px at 10% -10%, #172036 0%, var(--bg) 55%), var(--bg);
+      color:var(--ink); font:15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;}
+    .wrap{max-width:1180px; margin:28px auto 80px; padding:0 20px}
+    header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px}
+    h1{margin:0; font-size:26px}
+    .subtitle{color:var(--muted); font-size:13px}
+    .tools{display:flex; gap:10px; flex-wrap:wrap}
+    .btn{border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--ink); padding:10px 14px; border-radius:12px; cursor:pointer; box-shadow:var(--shadow)}
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .search{flex:1; display:flex; gap:10px}
+    .search input{flex:1; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:#0e1523; color:var(--ink)}
+
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    .tab{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.04); cursor:pointer; font-size:13px}
+    .tab.active{background:rgba(96,165,250,.15); border-color:rgba(96,165,250,.35); color:#d8ebff}
+
+    .grid{display:grid; gap:18px; grid-template-columns:repeat(12,1fr); margin-top:16px}
+    .card{grid-column:span 12; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .card .hd{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line)}
+    .card .hd h2{margin:0; font-size:18px}
+    .card .bd{padding:8px 16px 16px}
+
+    .kv{display:grid; grid-template-columns: 200px 1fr auto; align-items:center; gap:10px; padding:10px 0; border-bottom:1px dashed var(--line)}
+    .kv:last-child{border-bottom:none}
+    .k{color:var(--muted)}
+    .v{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+    .actions{display:flex; gap:8px}
+
+    .icon{width:18px; height:18px; display:inline-block; vertical-align:middle; opacity:.9}
+    .icon-btn{border:1px solid var(--line); background:rgba(255,255,255,.04); border-radius:10px; padding:8px; cursor:pointer}
+    .icon-btn:hover{background:rgba(255,255,255,.08)}
+
+    .tag{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:#cfe4ff; background:rgba(96,165,250,.12); font-size:12px}
+    .row-actions{display:flex; gap:10px; flex-wrap:wrap}
+
+    .two{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media (max-width:920px){ .two{grid-template-columns:1fr} }
+
+    .toast{position:fixed; right:20px; bottom:20px; background:#0f172a; color:#d9e7ff; padding:10px 14px; border:1px solid var(--line); border-radius:10px; opacity:0; transform:translateY(10px); transition:all .25s ease; pointer-events:none}
+    .toast.show{opacity:1; transform:translateY(0)}
+
+    .help{color:var(--muted); font-size:12px; margin:4px 0 0}
+    a{color:#b9d7ff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>QA Test Data — Copyboard</h1>
+        <div class="subtitle">Environment-scoped Applicant/Co‑Applicant identities • Dummy PAN & Aadhaar that fetch profiles • Banking & Cards • One‑click copy</div>
+      </div>
+      <div class="tools">
+        <button class="btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+      </div>
+    </header>
+
+    <div class="search">
+      <input id="searchBox" placeholder="Search any field (name, email, PAN, Aadhaar, phone, employee id, etc.)" oninput="filterAll()" />
+    </div>
+
+    <div class="tabs" id="envTabs"></div>
+    <div id="envPanels"></div>
+
+    <div class="grid">
+      <section class="card">
+        <div class="hd"><h2>Shared Dummy PAN (Fetch user profile)</h2><div class="row-actions"><span class="tag">Reusable</span></div></div>
+        <div class="bd" id="dummyPan"></div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Shared Dummy Aadhaar (Fetch user profile)</h2><div class="row-actions"><span class="tag">Reusable</span></div></div>
+        <div class="bd" id="dummyAadhaar"></div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Banking & Cards</h2><div class="row-actions"><button class="btn" onclick="copyBankingJSON()">Copy JSON</button></div></div>
+        <div class="bd" id="banking"></div>
+      </section>
+    </div>
+
+    <p class="help">Tip: Click the 📋 icon to copy a single value. Use <em>Copy JSON</em> on a card to paste into Jira/Slack quickly. “Open in Yopmail” jumps to the test inbox for OTP.</p>
+  </div>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    const data = {
+      environments: {
+        Staging: {
+          Applicant: {
+            Name: "Rahul Sharma",
+            Email: "staginguser.applicant@yopmail.com",
+            Phone: "+91-9000000001",
+            EmployeeID: "STG-EMP-001",
+            PAN: "STGPAN001A",
+            Aadhaar: "1111 2222 3333",
+            "Bank A/c": "111122223333 / IFSC: TEST0001111",
+            "UPI ID": "stgapplicant@upi",
+            "Credit Card": "4111 1111 1111 1111 / 12-26 / CVV 123"
+          },
+          "Co-Applicant": {
+            Name: "Priya Sharma",
+            Email: "staginguser.coapplicant@yopmail.com",
+            Phone: "+91-9000000002",
+            EmployeeID: "STG-EMP-002",
+            PAN: "STGPAN002B",
+            Aadhaar: "4444 5555 6666",
+            "Bank A/c": "444455556666 / IFSC: TEST0002222",
+            "UPI ID": "stgcoapplicant@upi",
+            "Credit Card": "5555 5555 5555 4444 / 12-26 / CVV 123"
+          }
+        },
+        UAT: {
+          Applicant: {
+            Name: "Amit Verma",
+            Email: "uatuser.applicant@yopmail.com",
+            Phone: "+91-9000000011",
+            EmployeeID: "UAT-EMP-011",
+            PAN: "UATPAN011X",
+            Aadhaar: "7777 8888 9999",
+            "Bank A/c": "777788889999 / IFSC: TEST0003333",
+            "UPI ID": "uatapplicant@upi",
+            "Credit Card": "6521 1234 5678 9012 / 12-26 / CVV 123"
+          },
+          "Co-Applicant": {
+            Name: "Neha Verma",
+            Email: "uatuser.coapplicant@yopmail.com",
+            Phone: "+91-9000000012",
+            EmployeeID: "UAT-EMP-012",
+            PAN: "UATPAN012Y",
+            Aadhaar: "2222 3333 4444",
+            "Bank A/c": "222233334444 / IFSC: TEST0004444",
+            "UPI ID": "uatcoapplicant@upi",
+            "Credit Card": "6011 1111 1111 1117 / 12-26 / CVV 123"
+          }
+        },
+        Automation: {
+          Applicant: {
+            Name: "Karan Mehta",
+            Email: "automationuser.applicant@yopmail.com",
+            Phone: "+91-9000000021",
+            EmployeeID: "AUTO-EMP-021",
+            PAN: "AUTPAN021M",
+            Aadhaar: "5555 6666 7777",
+            "Bank A/c": "555566667777 / IFSC: TEST0005555",
+            "UPI ID": "autoapplicant@upi",
+            "Credit Card": "3782 822463 10005 / 12-26 / CVV 1234"
+          },
+          "Co-Applicant": {
+            Name: "Anjali Mehta",
+            Email: "automationuser.coapplicant@yopmail.com",
+            Phone: "+91-9000000022",
+            EmployeeID: "AUTO-EMP-022",
+            PAN: "AUTPAN022N",
+            Aadhaar: "8888 9999 0000",
+            "Bank A/c": "888899990000 / IFSC: TEST0006666",
+            "UPI ID": "autocoapplicant@upi",
+            "Credit Card": "3566 1111 1111 1113 / 12-26 / CVV 123"
+          }
+        }
+      },
+      dummyPan: [
+        { pan: "TESTPANA01", name: "Ramesh Kumar" },
+        { pan: "TESTPANA02", name: "Sita Devi" },
+        { pan: "TESTPANA03", name: "Arjun Singh" },
+        { pan: "TESTPANA04", name: "Priya Das" },
+        { pan: "TESTPANA05", name: "Amit Verma" }
+      ],
+      dummyAadhaar: [
+        { aadhaar: "1234 5678 1111", name: "Ramesh Kumar" },
+        { aadhaar: "1234 5678 2222", name: "Sita Devi" },
+        { aadhaar: "1234 5678 3333", name: "Arjun Singh" },
+        { aadhaar: "1234 5678 4444", name: "Priya Das" },
+        { aadhaar: "1234 5678 5555", name: "Amit Verma" }
+      ],
+      banking: [
+        { k: "Bank Account", v: "1234567890 / IFSC: TEST0001234", note: "Shared dummy bank" },
+        { k: "UPI ID", v: "testuser@upi", note: "Generic UPI" },
+        { k: "Wallet ID", v: "WALLET-TEST-001", note: "Generic wallet" },
+        { k: "Visa Card", v: "4111 1111 1111 1111 / 12-26 / CVV 123", note: "Always pass" },
+        { k: "MasterCard", v: "5555 5555 5555 4444 / 12-26 / CVV 123", note: "Decline scenario" },
+        { k: "RuPay Card", v: "6521 1234 5678 9012 / 12-26 / CVV 123", note: "India specific" },
+        { k: "Amex Card", v: "3782 822463 10005 / 12-26 / CVV 1234", note: "15-digit test card" },
+        { k: "JCB Card", v: "3566 1111 1111 1113 / 12-26 / CVV 123", note: "Global card test" }
+      ]
+    };
+
+    const $ = sel => document.querySelector(sel);
+    const el = html => Object.assign(document.createElement('div'), { innerHTML: html }).firstElementChild;
+
+    function toast(msg='Copied!'){
+      const t = $('#toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(()=> t.classList.remove('show'), 1200);
+    }
+
+    function copy(text){
+      navigator.clipboard.writeText(text).then(()=> toast());
+    }
+
+    function yopmailLink(email){
+      try{ const name = email.split('@')[0]; return `https://yopmail.com/?login=${encodeURIComponent(name)}` }catch{ return 'https://yopmail.com' }
+    }
+
+    function makeCopyBtn(text, title='Copy'){
+      const btn = el(`<button class="icon-btn" title="${title}">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>`);
+      btn.addEventListener('click', ()=> copy(text));
+      return btn;
+    }
+
+    function cardHeader(title, obj){
+      const hdr = el(`<div class="hd"><h2>${title}</h2><div class="row-actions"></div></div>`);
+      const jsonBtn = el('<button class="btn">Copy JSON</button>');
+      jsonBtn.addEventListener('click', ()=> copy(JSON.stringify(obj, null, 2)));
+      hdr.querySelector('.row-actions').append(jsonBtn);
+      return hdr;
+    }
+
+    function renderEnvPanels(){
+      const tabs = $('#envTabs');
+      const panels = $('#envPanels');
+      tabs.innerHTML = ''; panels.innerHTML = '';
+      const envNames = Object.keys(data.environments);
+      envNames.forEach((env, idx)=>{
+        const t = el(`<button class="tab ${idx===0?'active':''}">${env}</button>`);
+        t.addEventListener('click', ()=> activate(env));
+        tabs.append(t);
+
+        const panel = el('<div class="grid" style="display:none"></div>');
+        panel.id = `panel-${env}`;
+
+        const envObj = data.environments[env];
+        Object.entries(envObj).forEach(([role, fields])=>{
+          const card = el('<section class="card"></section>');
+          card.append(cardHeader(`${env} — ${role}`, fields));
+          const body = el('<div class="bd"></div>');
+
+          Object.entries(fields).forEach(([k,v])=>{
+            const row = el('<div class="kv"></div>');
+            const key = el(`<div class="k">${k}</div>`);
+            const val = el(`<div class="v">${v}</div>`);
+            const actions = el('<div class="actions"></div>');
+            actions.append(makeCopyBtn(v));
+            if(k === 'Email' && /@yopmail\.com$/i.test(v)){
+              const link = el(`<a class="btn" style="padding:6px 10px" target="_blank" href="${yopmailLink(v)}">Open in Yopmail</a>`);
+              actions.append(link);
+            }
+            row.append(key, val, actions);
+            body.append(row);
+          });
+
+          card.append(body);
+          panel.append(card);
+        });
+
+        panels.append(panel);
+      });
+
+      function activate(name){
+        tabs.querySelectorAll('.tab').forEach(tab=> tab.classList.toggle('active', tab.textContent===name));
+        panels.querySelectorAll('.grid').forEach(p=> p.style.display = (p.id === `panel-${name}` ? '' : 'none'));
+      }
+
+      // Activate first by default
+      panels.querySelector('.grid').style.display = '';
+    }
+
+    function renderDummyLists(){
+      const panWrap = $('#dummyPan'); panWrap.innerHTML = '';
+      data.dummyPan.forEach(({pan,name})=>{
+        const row = el('<div class="kv"></div>');
+        row.append(el('<div class="k">PAN</div>'));
+        row.append(el(`<div class="v">${pan} — <span class="k">${name}</span></div>`));
+        const act = el('<div class="actions"></div>');
+        act.append(makeCopyBtn(pan, 'Copy PAN'));
+        row.append(act);
+        panWrap.append(row);
+      });
+
+      const aWrap = $('#dummyAadhaar'); aWrap.innerHTML = '';
+      data.dummyAadhaar.forEach(({aadhaar,name})=>{
+        const row = el('<div class="kv"></div>');
+        row.append(el('<div class="k">Aadhaar</div>'));
+        row.append(el(`<div class="v">${aadhaar} — <span class="k">${name}</span></div>`));
+        const act = el('<div class="actions"></div>');
+        act.append(makeCopyBtn(aadhaar, 'Copy Aadhaar'));
+        row.append(act);
+        aWrap.append(row);
+      });
+    }
+
+    function renderBanking(){
+      const wrap = $('#banking'); wrap.innerHTML = '';
+      data.banking.forEach(({k,v,note})=>{
+        const row = el('<div class="kv"></div>');
+        row.append(el(`<div class="k">${k}</div>`));
+        row.append(el(`<div class="v">${v} ${note?`<span class=\"k\">— ${note}</span>`:''}</div>`));
+        const act = el('<div class="actions"></div>');
+        act.append(makeCopyBtn(v, 'Copy'));
+        row.append(act);
+        wrap.append(row);
+      });
+    }
+
+    function filterAll(){
+      const q = $('#searchBox').value.trim().toLowerCase();
+      document.querySelectorAll('.kv').forEach(row=>{
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    function copyBankingJSON(){
+      copy(JSON.stringify(data.banking, null, 2));
+    }
+
+    // Init
+    renderEnvPanels();
+    renderDummyLists();
+    renderBanking();
+  </script>
+</body>
+</html>
